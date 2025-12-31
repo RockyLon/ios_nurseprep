@@ -1,0 +1,9 @@
+{
+  "appId": "org.capacitor.testbanks.app",
+  "appName": "Hesi A2",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "url": "http://10.0.0.171:9500"
+  }
+}
