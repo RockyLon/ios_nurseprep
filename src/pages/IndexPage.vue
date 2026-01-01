@@ -99,13 +99,10 @@
     <!-- <q-btn v-if="retakeMode" else @click="backToQuiz">back to quiz</q-btn> -->
 
     <div v-if="currentQuestion && questionStates">
-      <div class="row justify-between ">
+      <!-- <div class="row justify-between ">
         <div class="text-caption q-px-md ">
           <span v-if="currentQuestion['Test Number'] != 12 && !premium">
             Question {{ currentQuestion['Test Number'] }} of {{ questionStates.length }}
-            <!-- <router-link to="/upgrade" style="text-decoration: none;">
-              <strong class="text-primary">Unlock all Exams.</strong>
-            </router-link> -->
           </span>
 
 
@@ -113,15 +110,23 @@
           <span v-if="premium">
             Question {{ currentQuestion['Test Number'] }} of {{ questionStates.length }}
           </span>
+        </div>
+      </div> -->
 
-
-
-
-          <!-- Button to toggle bookmark status -->
-          <!-- <q-btn class="q-mb-xs" v-if="isQuestionAnswered(currentIndex)" size="sm" icon="bookmark" flat
-            @click="toggleBookmark(currentIndex)"
-            :color="questionStates[currentIndex].bookmarked || isBookmarked ? 'green' : 'grey-6'">
-          </q-btn> -->
+      <div class="q-px-xs q-mt-xs " v-if="questionStates.length">
+        <div class="mastery-strip">
+          <div class="mastery-pill mastery-pill--mastered">
+            Mastered {{ masteredCount }}
+          </div>
+          <div class="mastery-pill mastery-pill--review">
+            Learning {{ inReviewCount }}
+          </div>
+          <div class="mastery-pill mastery-pill--new">
+            New {{ newCount }}
+          </div>
+          <div class="mastery-pill mastery-pill--score">
+            Score {{ scorePercentage }}%
+          </div>
         </div>
       </div>
 
@@ -142,20 +147,24 @@
 
       <div v-if="!premium && currentQuestion['Test Number'] <= 11 || premium">
         <div class="flex flex-column row ">
-          <div class=" q-ma-md  q-pa-sm " style="font-size: 20px; border-radius: 10px">
+
+          <div class=" q-my-md " style="font-size: 20px; border-radius: 8px">
             {{ currentQuestion.Question }}
           </div>
           <div class="col-12">
+             <div v-if="showRetryHint" class="retry-hint">
+            Let's try this again
+          </div>
             <div v-for="n in getChoiceNumbers(currentQuestion)" :key="n"
               :class="[getOptionClass(n), darkModeToggle ? 'bg-grey-10' : 'bg-grey-2',]" class="q-my-sm "
               style="font-size: 17px; border-radius: 10px;">
-              <q-radio color="blue" :disable="isQuestionAnswered(currentIndex)" class="q-pa-sm q-pr-sm"
+              <q-radio color="blue" :disable="isQuestionAnswered(currentQuestionIndex)" class="q-pa-sm q-pr-sm"
                 style="border-radius: 7px; font-size: 15px; font-weight: 400" v-if="currentQuestion.Type === 'Single'"
-                :label="currentQuestion['Choice ' + n]" v-model="questionStates[currentIndex].userAnswer"
+                :label="currentQuestion['Choice ' + n]" v-model="questionStates[currentQuestionIndex].userAnswer"
                 :val="`${n}`" />
 
               <q-checkbox color="blue" class=" q-pa-xs q-pr-sm " style="border-radius: 7px; font-size: 15px;" v-else
-                :label="currentQuestion['Choice ' + n]" v-model="questionStates[currentIndex].userAnswer"
+                :label="currentQuestion['Choice ' + n]" v-model="questionStates[currentQuestionIndex].userAnswer"
                 :val="`${n}`" />
             </div>
           </div>
@@ -276,7 +285,7 @@
 
       <!-- Explanation - Shown after checking the answer -->
       <q-expansion-item default-opened class=" q-pb-lg " style="font-size: 17px;"
-        v-if="questionStates[currentIndex].answerChecked && currentQuestion.Explanation" label="Explanation">
+        v-if="questionStates[currentQuestionIndex].answerChecked && currentQuestion.Explanation" label="Explanation">
         <div class=" q-mb-xl q-mx-md ">{{ currentQuestion.Explanation }}</div>
       </q-expansion-item>
 
@@ -290,9 +299,9 @@
       <!-- Check Answer Button -->
       <!-- <q-page-sticky :offset="[10, 10]">
         <q-btn rounded class="bg-white q-px-lg" icon="check" color="green" no-caps
-          v-if="!questionStates[currentIndex].answerChecked &&
-            ((currentQuestion.Type === 'Single' && questionStates[currentIndex].userAnswer !== null) ||
-              (currentQuestion.Type === 'Multiple' && questionStates[currentIndex].userAnswer !== null && questionStates[currentIndex].userAnswer.length > 0))" label="Check"
+          v-if="!questionStates[currentQuestionIndex].answerChecked &&
+            ((currentQuestion.Type === 'Single' && questionStates[currentQuestionIndex].userAnswer !== null) ||
+              (currentQuestion.Type === 'Multiple' && questionStates[currentQuestionIndex].userAnswer !== null && questionStates[currentQuestionIndex].userAnswer.length > 0))" label="Check"
           @click="checkAnswer" />
       </q-page-sticky> -->
 
@@ -305,9 +314,9 @@
         <div class="row justify-center q-mb-md">
 
           <q-btn rounded icon="check" no-caps style="background-color: #5472ff;"
-            v-if="!questionStates[currentIndex].answerChecked &&
-              ((currentQuestion.Type === 'Single' && questionStates[currentIndex].userAnswer !== null) ||
-                (currentQuestion.Type === 'Multiple' && questionStates[currentIndex].userAnswer !== null && questionStates[currentIndex].userAnswer.length > 0))" label="Check Answer"
+            v-if="!questionStates[currentQuestionIndex].answerChecked &&
+              ((currentQuestion.Type === 'Single' && questionStates[currentQuestionIndex].userAnswer !== null) ||
+                (currentQuestion.Type === 'Multiple' && questionStates[currentQuestionIndex].userAnswer !== null && questionStates[currentQuestionIndex].userAnswer.length > 0))" label="Check Answer"
             @click="checkAnswer" />
 
 
@@ -322,12 +331,12 @@
             :disable="currentIndex === 0" />
 
 
-          <q-btn size="sm" @click="drawerLeft = true" flat label="Open Exams" stack no-caps icon="menu"></q-btn>
+          <!-- <q-btn size="sm" @click="drawerLeft = true" flat label="Open Exams" stack no-caps icon="menu"></q-btn> -->
 
 
-          <q-btn v-if="isQuestionAnswered(currentIndex)"
-            :icon="questionStates[currentIndex].bookmarked || isBookmarked ? 'bookmark' : 'bookmark_outline'" flat
-            label="Bookmark" no-caps stack size="sm" @click="toggleBookmark(currentIndex)">
+          <q-btn v-if="isQuestionAnswered(currentQuestionIndex)"
+            :icon="questionStates[currentQuestionIndex].bookmarked || isBookmarked ? 'bookmark' : 'bookmark_outline'" flat
+            label="Bookmark" no-caps stack size="sm" @click="toggleBookmark(currentQuestionIndex)">
           </q-btn>
 
 
@@ -345,7 +354,8 @@
 
           <!-- Next Button -->
           <q-btn v-if="currentQuestion['Test Number'] <= 10 || premium" flat icon="chevron_right" rounded no-caps
-            @click="goToNextQuestion" :disable="currentIndex === quizData.length - 1" stack label="Next" size="sm" />
+            @click="goToNextQuestion" :disable="currentIndex === queueLength - 1" stack label="Next" size="sm"
+            v-show="questionStates[currentQuestionIndex].answerChecked" />
 
           <q-btn v-else flat icon="chevron_right" rounded no-caps to="/upgrade" stack label="Next" size="sm" />
 
@@ -396,6 +406,12 @@ export default {
       premium: false,
       retakeMode: false,
       quizData: [],
+      quizQueue: [],
+      incorrectQueue: [],
+      retryQueue: [],
+      answeredSinceInsert: 0,
+      insertEvery: 3,
+      masteryTarget: 1,
       questionStates: [],
       currentIndex: 0,
       answers: [],
@@ -411,6 +427,8 @@ export default {
       },
       urlParam: this.$route.params.examName || 'fundamentals',
       isBookmarked: false,
+      showRetryHint: false,
+      pulseMastery: false,
 
       // incorrectQuestionIndices: [],
 
@@ -457,6 +475,9 @@ export default {
       // Toggle dark mode based on the value of darkModeToggle
       this.$q.dark.set(value);
       localStorage.setItem('darkMode', JSON.stringify(value));
+    },
+    currentIndex() {
+      this.notifyRetryIfNeeded();
     }
   },
 
@@ -468,9 +489,13 @@ export default {
       return Math.max(0, 10 - this.currentQuestion['Test Number']); // Calculate questions left
     },
 
+    queueLength() {
+      return this.quizQueue.length || this.quizData.length;
+    },
+
     isQuestionAnswered() {
-      return (index) => {
-        return this.questionStates[index].answerChecked;
+      return (questionIndex) => {
+        return this.questionStates[questionIndex]?.answerChecked;
       };
     },
 
@@ -487,6 +512,9 @@ export default {
         // Find the current index within the incorrectIndices array
         const currentIndexInIncorrect = incorrectIndices.indexOf(this.currentIndex);
         return currentIndexInIncorrect !== -1 ? incorrectIndices[currentIndexInIncorrect] : incorrectIndices[0];
+      } else if (this.quizQueue.length) {
+        const queueIndex = this.quizQueue[this.currentIndex];
+        return typeof queueIndex === 'number' ? queueIndex : this.currentIndex; // Regular quiz flow with queue
       } else {
         return this.currentIndex; // Regular quiz flow
       }
@@ -507,9 +535,204 @@ export default {
         .filter(index => index !== -1);
     },
 
+    masteredCount() {
+      return this.questionStates.reduce((acc, state) => {
+        return acc + (state.didAnswerCorrect && !state.needsReview ? 1 : 0);
+      }, 0);
+    },
+
+    inReviewCount() {
+      return this.questionStates.reduce((acc, state) => {
+        return acc + (state.needsReview ? 1 : 0);
+      }, 0);
+    },
+
+    newCount() {
+      return this.questionStates.reduce((acc, state) => {
+        return acc + (!state.answerChecked && !state.needsReview ? 1 : 0);
+      }, 0);
+    },
+
+    scorePercentage() {
+      const totalAttempted = this.masteredCount + this.inReviewCount;
+      if (!totalAttempted) {
+        return 0;
+      }
+      return Math.round((this.masteredCount / totalAttempted) * 100);
+    },
+
   },
 
   methods: {
+    buildDefaultQueue() {
+      return this.quizData.map((_, index) => index);
+    },
+
+    normalizeQuestionStates(savedStates) {
+      return this.quizData.map((question, index) => {
+        const state = savedStates[index] || {};
+        return {
+          userAnswer: state.userAnswer ?? (question.Type === 'Multiple' ? [] : null),
+          answerChecked: Boolean(state.answerChecked),
+          didAnswerCorrect: Boolean(state.didAnswerCorrect),
+          answerDate: state.answerDate ?? null,
+          testNumber: state.testNumber ?? question["Test Number"],
+          bookmarked: state.bookmarked ?? false,
+          correctCount: typeof state.correctCount === 'number' ? state.correctCount : 0,
+          needsReview: typeof state.needsReview === 'boolean'
+            ? state.needsReview
+            : Boolean(state.answerChecked && !state.didAnswerCorrect),
+        };
+      });
+    },
+
+    restoreQuizState(filePath) {
+      const savedState = localStorage.getItem(filePath);
+
+      if (savedState) {
+        const parsedState = JSON.parse(savedState);
+        const saved = parsedState[filePath] || {};
+        this.questionStates = this.normalizeQuestionStates(saved.questionStates || []);
+        const savedQueue = Array.isArray(saved.quizQueue)
+          ? saved.quizQueue.filter((index) => Number.isInteger(index) && index >= 0 && index < this.quizData.length)
+          : [];
+        this.quizQueue = savedQueue.length ? savedQueue : this.buildDefaultQueue();
+        this.incorrectQueue = Array.isArray(saved.incorrectQueue)
+          ? saved.incorrectQueue.filter((index) => Number.isInteger(index) && index >= 0 && index < this.quizData.length)
+          : [];
+        this.retryQueue = Array.isArray(saved.retryQueue)
+          ? saved.retryQueue.filter((index) => Number.isInteger(index) && index >= 0 && index < this.quizData.length)
+          : [];
+        this.answeredSinceInsert = typeof saved.answeredSinceInsert === 'number' ? saved.answeredSinceInsert : 0;
+
+        const nextIndex = typeof saved.currentIndex === 'number' ? saved.currentIndex + 1 : 0;
+        this.currentIndex = this.quizQueue.length ? Math.min(nextIndex, this.quizQueue.length - 1) : 0;
+      } else {
+        this.initializeQuestionStates();
+        this.quizQueue = this.buildDefaultQueue();
+        this.incorrectQueue = [];
+        this.retryQueue = [];
+        this.answeredSinceInsert = 0;
+        this.currentIndex = 0;
+      }
+
+      this.notifyRetryIfNeeded();
+    },
+
+    isMastered(questionIndex) {
+      const state = this.questionStates[questionIndex];
+      return Boolean(state && state.correctCount >= this.masteryTarget && !state.needsReview);
+    },
+
+    enqueueIncorrect(questionIndex) {
+      if (!this.incorrectQueue.includes(questionIndex)) {
+        this.incorrectQueue.push(questionIndex);
+      }
+    },
+
+    isInUpcomingQueue(questionIndex) {
+      return this.quizQueue.slice(this.currentIndex + 1).includes(questionIndex);
+    },
+
+    shuffleArray(items) {
+      for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+      }
+      return items;
+    },
+
+    mixInIncorrectQueue() {
+      if (!this.incorrectQueue.length) {
+        return;
+      }
+
+      const pending = this.incorrectQueue.filter((questionIndex) => !this.isMastered(questionIndex));
+      if (!pending.length) {
+        this.incorrectQueue = [];
+        return;
+      }
+
+      const insertAt = Math.min(this.currentIndex + 1, this.quizQueue.length);
+      const upcoming = this.quizQueue.slice(insertAt);
+      const dedupedPending = pending.filter((questionIndex) => !upcoming.includes(questionIndex));
+      const maxPending = Math.min(dedupedPending.length, upcoming.length);
+      const pendingToInsert = dedupedPending.slice(0, maxPending);
+      const remainingPending = dedupedPending.slice(maxPending);
+      const mixed = [];
+      let upcomingIndex = 0;
+      let pendingIndex = 0;
+
+      while (upcomingIndex < upcoming.length || pendingIndex < pendingToInsert.length) {
+        if (upcomingIndex < upcoming.length) {
+          mixed.push(upcoming[upcomingIndex]);
+          upcomingIndex += 1;
+        }
+        if (pendingIndex < pendingToInsert.length) {
+          mixed.push(pendingToInsert[pendingIndex]);
+          pendingIndex += 1;
+        }
+      }
+
+      const currentIndex = this.currentQuestionIndex;
+      pendingToInsert.forEach((questionIndex) => {
+        if (questionIndex === currentIndex) {
+          return;
+        }
+        const state = this.questionStates[questionIndex];
+        const question = this.quizData[questionIndex];
+        if (state && question) {
+          state.answerChecked = false;
+          state.didAnswerCorrect = false;
+          state.userAnswer = question.Type === 'Multiple' ? [] : null;
+        }
+      });
+
+      this.quizQueue = this.quizQueue.slice(0, insertAt).concat(mixed);
+      pendingToInsert.forEach((questionIndex) => {
+        if (!this.retryQueue.includes(questionIndex)) {
+          this.retryQueue.push(questionIndex);
+        }
+      });
+      this.incorrectQueue = remainingPending;
+    },
+
+    insertImmediateRetry(questionIndex) {
+      if (this.isInUpcomingQueue(questionIndex)) {
+        return;
+      }
+      const insertAt = Math.min(this.currentIndex + 1, this.quizQueue.length);
+      this.quizQueue.splice(insertAt, 0, questionIndex);
+      const state = this.questionStates[questionIndex];
+      const question = this.quizData[questionIndex];
+      if (state && question && questionIndex !== this.currentQuestionIndex) {
+        state.answerChecked = false;
+        state.didAnswerCorrect = false;
+        state.userAnswer = question.Type === 'Multiple' ? [] : null;
+      }
+      if (!this.retryQueue.includes(questionIndex)) {
+        this.retryQueue.push(questionIndex);
+      }
+    },
+
+    notifyRetryIfNeeded() {
+      const questionIndex = this.currentQuestionIndex;
+      if (!this.retryQueue.includes(questionIndex)) {
+        this.showRetryHint = false;
+        return;
+      }
+
+      const state = this.questionStates[questionIndex];
+      const question = this.quizData[questionIndex];
+      if (state && question) {
+        state.answerChecked = false;
+        state.didAnswerCorrect = false;
+        state.userAnswer = question.Type === 'Multiple' ? [] : null;
+      }
+
+      this.showRetryHint = true;
+      this.retryQueue = this.retryQueue.filter((index) => index !== questionIndex);
+    },
 
     openLink(url) {
       window.open(url, "_blank");
@@ -567,26 +790,8 @@ console.log('filename', filename)
           this.$router.push({ name: 'exam', params: { examName: 'maternity' } });
 
 
-          // Attempt to restore saved state from localStorage
-          const savedState = localStorage.getItem('src/assets/maternity.json');
-
-          if (savedState) {
-            const parsedState = JSON.parse(savedState);
-
-            const questionStates = parsedState['src/assets/maternity.json'].questionStates;
-            const currentIndex = parsedState['src/assets/maternity.json'].currentIndex
-
-            this.currentIndex = currentIndex + 1
-            this.questionStates = questionStates
-            Loading.hide()
-
-          } else {
-            // No saved state, initialize
-            this.initializeQuestionStates();
-            this.currentIndex = 0;
-            Loading.hide()
-
-          }
+          this.restoreQuizState('src/assets/maternity.json');
+          Loading.hide()
 
         } catch (error) {
           console.error('Error loading exam:', error);
@@ -610,26 +815,8 @@ console.log('filename', filename)
           this.$router.push({ name: 'exam', params: { examName: 'drug_therapy' } });
 
 
-          // Attempt to restore saved state from localStorage
-          const savedState = localStorage.getItem('src/assets/drug_therapy.json');
-
-          if (savedState) {
-            const parsedState = JSON.parse(savedState);
-
-            const questionStates = parsedState['src/assets/drug_therapy.json'].questionStates;
-            const currentIndex = parsedState['src/assets/drug_therapy.json'].currentIndex
-
-            this.currentIndex = currentIndex + 1
-            this.questionStates = questionStates
-
-            Loading.hide()
-
-          } else {
-            // No saved state, initialize
-            this.initializeQuestionStates();
-            this.currentIndex = 0;
-            Loading.hide()
-          }
+          this.restoreQuizState('src/assets/drug_therapy.json');
+          Loading.hide()
 
         } catch (error) {
           console.error('Error loading exam:', error);
@@ -654,28 +841,8 @@ console.log('filename', filename)
 
 
 
-          // Attempt to restore saved state from localStorage
-          const savedState = localStorage.getItem('src/assets/foundation.json');
-
-          if (savedState) {
-            const parsedState = JSON.parse(savedState);
-
-            const questionStates = parsedState['src/assets/foundation.json'].questionStates;
-            const currentIndex = parsedState['src/assets/foundation.json'].currentIndex
-
-            this.currentIndex = currentIndex + 1
-            this.questionStates = questionStates
-
-            Loading.hide()
-
-          } else {
-            // No saved state, initialize
-            this.initializeQuestionStates();
-            this.currentIndex = 0;
-            Loading.hide()
-
-
-          }
+          this.restoreQuizState('src/assets/foundation.json');
+          Loading.hide()
 
         } catch (error) {
           console.error('Error loading exam:', error);
@@ -698,24 +865,8 @@ console.log('filename', filename)
           this.$router.push({ name: 'exam', params: { examName: 'fundamentals' } });
 
 
-          // Attempt to restore saved state from localStorage
-          const savedState = localStorage.getItem('src/assets/fundamentals.json');
-
-          if (savedState) {
-            const parsedState = JSON.parse(savedState);
-
-            const questionStates = parsedState['src/assets/fundamentals.json'].questionStates;
-            const currentIndex = parsedState['src/assets/fundamentals.json'].currentIndex
-
-            this.currentIndex = currentIndex + 1
-            this.questionStates = questionStates
-            Loading.hide()
-          } else {
-            // No saved state, initialize
-            this.initializeQuestionStates();
-            this.currentIndex = 0;
-            Loading.hide()
-          }
+          this.restoreQuizState('src/assets/fundamentals.json');
+          Loading.hide()
 
         } catch (error) {
           console.error('Error loading exam:', error);
@@ -740,25 +891,8 @@ console.log('filename', filename)
 
 
 
-          // Attempt to restore saved state from localStorage
-          const savedState = localStorage.getItem('src/assets/gerentology.json');
-
-          if (savedState) {
-            const parsedState = JSON.parse(savedState);
-
-            const questionStates = parsedState['src/assets/gerentology.json'].questionStates;
-            const currentIndex = parsedState['src/assets/gerentology.json'].currentIndex
-
-            this.currentIndex = currentIndex + 1
-            this.questionStates = questionStates
-            Loading.hide()
-
-          } else {
-            // No saved state, initialize
-            this.initializeQuestionStates();
-            this.currentIndex = 0;
-            Loading.hide()
-          }
+          this.restoreQuizState('src/assets/gerentology.json');
+          Loading.hide()
 
         } catch (error) {
           console.error('Error loading exam:', error);
@@ -783,26 +917,8 @@ console.log('filename', filename)
 
 
 
-          // Attempt to restore saved state from localStorage
-          const savedState = localStorage.getItem('src/assets/medsurg.json');
-
-          if (savedState) {
-            const parsedState = JSON.parse(savedState);
-
-            const questionStates = parsedState['src/assets/medsurg.json'].questionStates;
-            const currentIndex = parsedState['src/assets/medsurg.json'].currentIndex
-
-            this.currentIndex = currentIndex + 1
-            this.questionStates = questionStates
-            Loading.hide()
-
-          } else {
-            // No saved state, initialize
-            this.initializeQuestionStates();
-            this.currentIndex = 0;
-            Loading.hide()
-
-          }
+          this.restoreQuizState('src/assets/medsurg.json');
+          Loading.hide()
 
         } catch (error) {
           console.error('Error loading exam:', error);
@@ -826,26 +942,8 @@ console.log('filename', filename)
 
 
 
-          // Attempt to restore saved state from localStorage
-          const savedState = localStorage.getItem('src/assets/pharmacology.json');
-
-          if (savedState) {
-            const parsedState = JSON.parse(savedState);
-
-            const questionStates = parsedState['src/assets/pharmacology.json'].questionStates;
-            const currentIndex = parsedState['src/assets/pharmacology.json'].currentIndex
-
-            this.currentIndex = currentIndex + 1
-            this.questionStates = questionStates
-            Loading.hide()
-
-          } else {
-            // No saved state, initialize
-            this.initializeQuestionStates();
-            this.currentIndex = 0;
-            Loading.hide()
-
-          }
+          this.restoreQuizState('src/assets/pharmacology.json');
+          Loading.hide()
 
         } catch (error) {
           console.error('Error loading exam:', error);
@@ -869,26 +967,8 @@ console.log('filename', filename)
 
 
 
-          // Attempt to restore saved state from localStorage
-          const savedState = localStorage.getItem('src/assets/basic_nursing.json');
-
-          if (savedState) {
-            const parsedState = JSON.parse(savedState);
-
-            const questionStates = parsedState['src/assets/basic_nursing.json'].questionStates;
-            const currentIndex = parsedState['src/assets/basic_nursing.json'].currentIndex
-
-            this.currentIndex = currentIndex + 1
-            this.questionStates = questionStates
-            Loading.hide()
-
-          } else {
-            // No saved state, initialize
-            this.initializeQuestionStates();
-            this.currentIndex = 0;
-            Loading.hide()
-
-          }
+          this.restoreQuizState('src/assets/basic_nursing.json');
+          Loading.hide()
 
         } catch (error) {
           console.error('Error loading exam:', error);
@@ -912,26 +992,8 @@ console.log('filename', filename)
 
 
 
-          // Attempt to restore saved state from localStorage
-          const savedState = localStorage.getItem('src/assets/concepts_nursing.json');
-
-          if (savedState) {
-            const parsedState = JSON.parse(savedState);
-
-            const questionStates = parsedState['src/assets/concepts_nursing.json'].questionStates;
-            const currentIndex = parsedState['src/assets/concepts_nursing.json'].currentIndex
-
-            this.currentIndex = currentIndex + 1
-            this.questionStates = questionStates
-            Loading.hide()
-
-          } else {
-            // No saved state, initialize
-            this.initializeQuestionStates();
-            this.currentIndex = 0;
-            Loading.hide()
-
-          }
+          this.restoreQuizState('src/assets/concepts_nursing.json');
+          Loading.hide()
 
         } catch (error) {
           console.error('Error loading exam:', error);
@@ -955,25 +1017,8 @@ console.log('filename', filename)
 
 
 
-          // Attempt to restore saved state from localStorage
-          const savedState = localStorage.getItem('src/assets/mental_health.json');
-
-          if (savedState) {
-            const parsedState = JSON.parse(savedState);
-
-            const questionStates = parsedState['src/assets/mental_health.json'].questionStates;
-            const currentIndex = parsedState['src/assets/mental_health.json'].currentIndex
-            this.currentIndex = currentIndex + 1
-            this.questionStates = questionStates
-            Loading.hide()
-
-          } else {
-            // No saved state, initialize
-            this.initializeQuestionStates();
-            this.currentIndex = 0;
-            Loading.hide()
-
-          }
+          this.restoreQuizState('src/assets/mental_health.json');
+          Loading.hide()
 
         } catch (error) {
           console.error('Error loading exam:', error);
@@ -997,25 +1042,8 @@ console.log('filename', filename)
 
 
 
-          // Attempt to restore saved state from localStorage
-          const savedState = localStorage.getItem('src/assets/nutrition_health.json');
-
-          if (savedState) {
-            const parsedState = JSON.parse(savedState);
-
-            const questionStates = parsedState['src/assets/nutrition_health.json'].questionStates;
-            const currentIndex = parsedState['src/assets/nutrition_health.json'].currentIndex
-            this.currentIndex = currentIndex + 1
-            this.questionStates = questionStates
-            Loading.hide()
-
-          } else {
-            // No saved state, initialize
-            this.initializeQuestionStates();
-            this.currentIndex = 0;
-            Loading.hide()
-
-          }
+          this.restoreQuizState('src/assets/nutrition_health.json');
+          Loading.hide()
 
         } catch (error) {
           console.error('Error loading exam:', error);
@@ -1039,25 +1067,8 @@ console.log('filename', filename)
 
 
 
-          // Attempt to restore saved state from localStorage
-          const savedState = localStorage.getItem('src/assets/pathophysiology.json');
-
-          if (savedState) {
-            const parsedState = JSON.parse(savedState);
-
-            const questionStates = parsedState['src/assets/pathophysiology.json'].questionStates;
-            const currentIndex = parsedState['src/assets/pathophysiology.json'].currentIndex
-            this.currentIndex = currentIndex + 1
-            this.questionStates = questionStates
-            Loading.hide()
-
-          } else {
-            // No saved state, initialize
-            this.initializeQuestionStates();
-            this.currentIndex = 0;
-            Loading.hide()
-
-          }
+          this.restoreQuizState('src/assets/pathophysiology.json');
+          Loading.hide()
 
         } catch (error) {
           console.error('Error loading exam:', error);
@@ -1081,25 +1092,8 @@ console.log('filename', filename)
 
 
 
-          // Attempt to restore saved state from localStorage
-          const savedState = localStorage.getItem('src/assets/pediatric.json');
-
-          if (savedState) {
-            const parsedState = JSON.parse(savedState);
-
-            const questionStates = parsedState['src/assets/pediatric.json'].questionStates;
-            const currentIndex = parsedState['src/assets/pediatric.json'].currentIndex
-            this.currentIndex = currentIndex + 1
-            this.questionStates = questionStates
-            Loading.hide()
-
-          } else {
-            // No saved state, initialize
-            this.initializeQuestionStates();
-            this.currentIndex = 0;
-            Loading.hide()
-
-          }
+          this.restoreQuizState('src/assets/pediatric.json');
+          Loading.hide()
 
         } catch (error) {
           console.error('Error loading exam:', error);
@@ -1123,25 +1117,8 @@ console.log('filename', filename)
 
 
 
-          // Attempt to restore saved state from localStorage
-          const savedState = localStorage.getItem('src/assets/psychiatric.json');
-
-          if (savedState) {
-            const parsedState = JSON.parse(savedState);
-
-            const questionStates = parsedState['src/assets/psychiatric.json'].questionStates;
-            const currentIndex = parsedState['src/assets/psychiatric.json'].currentIndex
-            this.currentIndex = currentIndex + 1
-            this.questionStates = questionStates
-            Loading.hide()
-
-          } else {
-            // No saved state, initialize
-            this.initializeQuestionStates();
-            this.currentIndex = 0;
-            Loading.hide()
-
-          }
+          this.restoreQuizState('src/assets/psychiatric.json');
+          Loading.hide()
 
         } catch (error) {
           console.error('Error loading exam:', error);
@@ -1165,25 +1142,8 @@ console.log('filename', filename)
 
 
 
-          // Attempt to restore saved state from localStorage
-          const savedState = localStorage.getItem('src/assets/high_acuity.json');
-
-          if (savedState) {
-            const parsedState = JSON.parse(savedState);
-
-            const questionStates = parsedState['src/assets/high_acuity.json'].questionStates;
-            const currentIndex = parsedState['src/assets/high_acuity.json'].currentIndex
-            this.currentIndex = currentIndex + 1
-            this.questionStates = questionStates
-            Loading.hide()
-
-          } else {
-            // No saved state, initialize
-            this.initializeQuestionStates();
-            this.currentIndex = 0;
-            Loading.hide()
-
-          }
+          this.restoreQuizState('src/assets/high_acuity.json');
+          Loading.hide()
 
         } catch (error) {
           console.error('Error loading exam:', error);
@@ -1207,25 +1167,8 @@ console.log('filename', filename)
 
 
 
-          // Attempt to restore saved state from localStorage
-          const savedState = localStorage.getItem('src/assets/proffessional.json');
-
-          if (savedState) {
-            const parsedState = JSON.parse(savedState);
-
-            const questionStates = parsedState['src/assets/high_acuity.json'].questionStates;
-            const currentIndex = parsedState['src/assets/high_acuity.json'].currentIndex
-            this.currentIndex = currentIndex + 1
-            this.questionStates = questionStates
-            Loading.hide()
-
-          } else {
-            // No saved state, initialize
-            this.initializeQuestionStates();
-            this.currentIndex = 0;
-            Loading.hide()
-
-          }
+          this.restoreQuizState('src/assets/proffessional.json');
+          Loading.hide()
 
         } catch (error) {
           console.error('Error loading exam:', error);
@@ -1254,6 +1197,10 @@ console.log('filename', filename)
     goToNextQuestion() {
 
       this.isBookmarked = false;
+      const questionIndex = this.currentQuestionIndex;
+      if (!this.questionStates[questionIndex]?.answerChecked) {
+        return;
+      }
 
       // if (!this.premium) {
       //   const currentQuestion = this.currentQuestion;
@@ -1308,7 +1255,7 @@ console.log('filename', filename)
 
       } else {
         // Normal quiz flow
-        if (this.currentIndex < this.quizData.length - 1) {
+        if (this.currentIndex < this.queueLength - 1) {
           this.currentIndex++;
         }
 
@@ -1345,6 +1292,7 @@ console.log('filename', filename)
     checkAnswer() {
       this.answeredQuestions++;
       const currentQuestion = this.currentQuestion;
+      const questionIndex = this.currentQuestionIndex;
 
       // // Show interstitial ad every 10 questions
       // if (currentQuestion['Test Number'] % 10 === 0) {
@@ -1354,11 +1302,11 @@ console.log('filename', filename)
 
 
       // Request review every 15 questions
-      if (currentQuestion['Test Number'] % 5 === 0) {
-        this.requestReview(); // Call your review request function
-      }
+      // if (currentQuestion['Test Number'] % 5 === 0) {
+      //   this.requestReview(); // Call your review request function
+      // }
 
-      const currentState = this.questionStates[this.currentIndex];
+      const currentState = this.questionStates[questionIndex];
       currentState.answerChecked = true;
       // Determine if the answer is correct
       if (currentQuestion.Type === 'Single') {
@@ -1401,20 +1349,11 @@ console.log('filename', filename)
             icon: 'thumb_up',
             iconColor: 'teal',
             timeout: 1000,
-            position: "bottom"
+            position: "top"
           })
 
         } else {
-          this.$q.notify({
-            color: 'white',
-            textColor: 'dark',
-            // type: 'negative',
-            message: 'Marked for Review',
-            icon: 'analytics',
-            iconColor: 'red',
-            timeout: 1000,
-            position: "bottom"
-          })
+          // Intentional: no incorrect toast here.
         }
 
       } else if (currentQuestion.Type === 'Multiple') {
@@ -1424,6 +1363,23 @@ console.log('filename', filename)
 
         // Compare the arrays
         currentState.didAnswerCorrect = JSON.stringify(correctAnswersSorted) === JSON.stringify(userAnswersSorted);
+      }
+
+      currentState.correctCount = currentState.didAnswerCorrect
+        ? (typeof currentState.correctCount === 'number' ? currentState.correctCount + 1 : 1)
+        : 0;
+
+      if (!currentState.didAnswerCorrect) {
+        currentState.needsReview = true;
+        if (this.retryQueue.includes(questionIndex)) {
+          this.insertImmediateRetry(questionIndex);
+        } else {
+          this.enqueueIncorrect(questionIndex);
+        }
+        this.showRetryHint = false;
+      } else {
+        currentState.needsReview = false;
+        this.showRetryHint = false;
       }
 
       currentState.answerDate = new Date().toISOString();
@@ -1446,11 +1402,18 @@ console.log('filename', filename)
             iconColor: 'purple',
             message: `You crushed your daily goal of ${dailyGoal} questions! How many more can you conquer? 🤔`,
             timeout: 5000, // Adjust timeout as needed
-            position: "bottom"
+            position: "top"
           });
           LocalStorage.set('dailyGoalNotificationDate', today);
         }
       }
+      this.answeredSinceInsert++;
+      if (this.answeredSinceInsert >= this.insertEvery) {
+        this.mixInIncorrectQueue();
+        this.answeredSinceInsert = 0;
+      }
+
+      this.triggerMasteryPulse();
       this.saveQuizState();
 
     },
@@ -1461,13 +1424,27 @@ console.log('filename', filename)
         [this.examName.path]: {
           currentIndex: this.currentIndex,
           questionStates: this.questionStates,
+          quizQueue: this.quizQueue,
+          incorrectQueue: this.incorrectQueue,
+          retryQueue: this.retryQueue,
+          answeredSinceInsert: this.answeredSinceInsert,
         }
       };
       localStorage.setItem(this.examName.path, JSON.stringify(quizDataToSave));
     },
 
+    triggerMasteryPulse() {
+      this.pulseMastery = false;
+      this.$nextTick(() => {
+        this.pulseMastery = true;
+        setTimeout(() => {
+          this.pulseMastery = false;
+        }, 200);
+      });
+    },
+
     getOptionClass(n) {
-      const state = this.questionStates[this.currentIndex];
+      const state = this.questionStates[this.currentQuestionIndex];
       const question = this.currentQuestion;
 
       // Ensure we have state and the user has checked an answer
@@ -1515,9 +1492,15 @@ console.log('filename', filename)
         didAnswerCorrect: false,
         answerDate: null,
         testNumber: question["Test Number"],
+        correctCount: 0,
+        needsReview: false,
       }));
 
       localStorage.removeItem('quizState'); // Consider if you need to preserve any part of quizState in localStorage
+      this.quizQueue = this.buildDefaultQueue();
+      this.incorrectQueue = [];
+      this.retryQueue = [];
+      this.answeredSinceInsert = 0;
       this.saveQuizState(); // Optionally, save the reset state immediately to localStorage
     },
     initializeQuestionStates() {
@@ -1528,6 +1511,8 @@ console.log('filename', filename)
         didAnswerCorrect: false,
         answerDate: null,
         testNumber: question["Test Number"],
+        correctCount: 0,
+        needsReview: false,
       }));
     },
 
@@ -1752,29 +1737,7 @@ console.log('filename', filename)
       this.examName.url = defaultUrlParam
 
 
-      // Attempt to restore saved state from localStorage
-      const savedState = localStorage.getItem(`src/assets/${defaultUrlParam}.json`);
-
-
-      if (savedState) {
-        const parsedState = JSON.parse(savedState);
-
-        const questionStates = parsedState[`src/assets/${defaultUrlParam}.json`].questionStates;
-        const currentIndex = parsedState[`src/assets/${defaultUrlParam}.json`].currentIndex
-
-        // Assuming you want to ensure the user continues where they left off
-        this.currentIndex = currentIndex + 1 || 0;
-        this.questionStates = questionStates || this.initializeQuestionStates();
-
-        Loading.show({
-          message: `Loading questions, please wait...`
-        })
-      } else {
-
-        // No saved state, initialize
-        this.initializeQuestionStates();
-        this.currentIndex = 0;
-      }
+      this.restoreQuizState(`src/assets/${defaultUrlParam}.json`);
 
       Loading.hide()
     } catch (error) {
@@ -1827,5 +1790,61 @@ console.log('filename', filename)
   border: 3px solid rgb(238, 110, 176);
   max-width: 400px;
   border-radius: 10px;
+}
+
+.retry-hint {
+  color: #e07a1f;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 8px 16px 0;
+}
+
+.mastery-strip {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mastery-pill {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mastery-pill--mastered {
+  background: #e6f7ee;
+  color: #1f7a4d;
+}
+
+.mastery-pill--review {
+  background: #fff2e3;
+  color: #b25a1a;
+}
+
+.mastery-pill--new {
+  background: #eef2ff;
+  color: #3a4aa3;
+}
+
+.mastery-pill--score {
+  background: #f3f6f9;
+  color: #4b5563;
+}
+
+.pulse-once {
+  animation: masteryPulse 180ms ease-out;
+}
+
+@keyframes masteryPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 </style>
